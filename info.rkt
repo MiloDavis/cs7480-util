@@ -1,6 +1,6 @@
 #lang info
 (define collection "cs7480-util")
-(define deps '("base" "lang-file" "typed-racket-lib"))
+(define deps '("base" "lang-file" "typed-racket-lib" "drracket-tool-lib"))
 (define build-deps '("scribble-lib" "racket-doc" "rackunit-lib"))
 (define pkg-desc "Static analysis utilities")
 (define version "0.1.0")
