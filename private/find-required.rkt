@@ -1,11 +1,6 @@
 #lang racket/base
 
 (provide
- module->typed-identifiers
- ;; (-> [Path-String] (Listof Identifier))
- ;; Return a list of identifiers referenced in a module that came
- ;;  from another module defined with #lang typed/racket or #lang typed/racket/base
-
  module->required-identifiers
  ;; (->* [Path-String] [#:only-from (U #f Path-String (Listof Path-String))] (Listof Identifier))
  ;; Return a list of identifiers referenced in a module that are defined externally.
@@ -46,15 +41,11 @@
     (or (set-member? tr-cache p)
         (and (eq? p (path->collects-relative p)) ;;bg; filter identifiers from collections
              (let ([lang (lang-file-lang p)])
-               (and lang
-                    (string-prefix? lang "typed/racket"))
-               (set-add! tr-cache p)
-               #t))))
-  (parameterize ([current-path-filter tr-filter])
-    (get-required/internal path-string collector%)))
-
-(define (module->typed-identifiers path-string)
-  (module->typed-required/internal path-string identifier-collector%))
+               (cond [(and lang (string-prefix? lang "typed/racket"))
+                      (set-add! tr-cache p)
+                      #t]
+                     [else #f])))))
+  (get-required/internal path-string collector%))
 
 (define path-collector%
   (class (annotations-mixin object%)
@@ -85,8 +76,10 @@
            [(eq? #f only-from0)       (list)]
            [else                      only-from0])))
   (define (only-from-filter p)
-    (member p only-from))
-  (parameterize ([current-path-filter only-from-filter])
+    (or (not only-from0) (member p only-from)))
+  (parameterize ([current-path-filter only-from-filter]
+                 [current-load-relative-directory
+                  (path->string (path-only path-string))])
     (get-required/internal path-string identifier-collector%)))
 
 ;; Overrides the `current-annotations` parameter for check-syntax.
