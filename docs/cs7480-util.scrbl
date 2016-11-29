@@ -37,3 +37,31 @@ Given a syntax object, create a map from identifiers to their bodies
 
 @defproc[(read-and-expand [path path-string?]) syntax?]{
 Parse a module and return the fully expanded syntax object}
+
+@defproc[(toplevel-fold [stx syntax?]
+						[#:module module-op (-> identifier? syntax? syntax? syntax? any/c)]
+                        [#:begin begin-op (-> syntax? syntax? any/c)]
+                        [#:begin-for-syntax begin-for-syntax-op (-> syntax? syntax? any/c)]
+                        [#:provide provide-op (-> syntax? syntax? any/c)]
+                        [#:declare declare-op (-> syntax? any/c)]
+                        [#:module* module*-op (-> identifier? syntax? syntax? syntax? any/c) ]
+                        [#:define-values define-values-op (-> syntax? syntax? syntax? any/c)]
+                        [#:define-syntaxes define-syntaxes-op (-> syntax? syntax syntax any/c)]
+                        [#:require require-op (-> syntax? syntax? any/c)]
+                        [#:with-continuation-mark with-cont-mark-op (-> syntax? syntax? syntax? syntax? any/c)]
+                        [#:lambda lambda-op (-> syntax? syntax? syntax? any/c)]
+                        [#:case-lambda case-lambda-op (-> syntax? syntax? any/c)]
+                        [#:app-typed-id app-typed-id-op (-> syntax? syntax? any/c)]
+                        [#:app-untyped-id app-untyped-id-op ]
+                        [#:app-inline-lambda app-inline-lambda-op (-> ]
+                        [#:app-inline-case-lambda app-inline-case-lambda-op ]
+                        [#:app-if app-if-op ]
+                        [#:app-other app-other-op ]
+                        [#:quote quote-op ]
+                        [#:quote-syntax quote-syntax-op ]
+                        [#:expression expression-op ]
+                        [#:if if-op ]
+                        [#:set! set!-op ]
+                        [#:let-values let-values-op ]
+                        [#:letrec-values letrec-values-op ]
+                        [#:var-ref var-ref-op])

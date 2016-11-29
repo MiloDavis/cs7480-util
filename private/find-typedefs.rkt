@@ -18,21 +18,13 @@
    ;;  fully expand the module,
    ;;  collect & return a map from exported identifiers to their types.
 
-   find-typedefs
-   ;; (-> Syntax (Free-Id-Table Type))
-   ;; Parse a syntax object for all type declarations.
-   ;; Return a map from identifiers to their (parsed) types.
-
-   typed-vector-introducer?
-   ;; (-> Type Boolean)
-   ;; Returns true if the argument type has a Vector in a positive position.
-
+   get-type
    )
 
   (require
+   "find-required.rkt"
    "find-defs.rkt"
    (submod typed-racket/base-env/base-types initialize)
-   racket/match
    racket/dict
    racket/path
    syntax/parse
@@ -49,7 +41,6 @@
    typed-racket/types/subtype
    typed-racket/types/union
    typed-racket/utils/tc-utils
-   (only-in typed-racket/base-env/base-types-extra ->)
    (for-template (only-in typed-racket/typed-racket do-standard-inits)
                  typed-racket/base-env/base-types
                  typed-racket/base-env/colon
@@ -61,54 +52,39 @@
   ;; ===========================================================================
 
   (define (get-typedefs path)
-    (parameterize ([current-directory (path-only path)]
+    (define po (path->string (path-only path)))
+    (parameterize ([current-directory po]
                    [current-load-relative-directory
-                    (path->complete-path (path-only path))])
-      (find-file-typedefs (file-name-from-path path))))
+                    (path->complete-path po)])
+      (find-file-typedefs (path->string (file-name-from-path path)))))
 
   (define (find-file-typedefs path-str)
-    (parameterize ([current-namespace (make-base-namespace )])
+    (parameterize ([current-namespace (make-base-namespace)])
       (do-standard-inits)
-      (find-typedefs (read-and-expand path-str))))
+      (for/fold ([acc (make-immutable-free-id-table)])
+                ([path (in-list (module->typed-files path-str))])
+        (syntax-object->typedefs (read-and-expand (path->string path)) acc))))
 
-  ;; (require typed-racket/private/parse-type)
   ;; Needs more information about required/provided functions to actually work
-  (define (find-typedefs stx)
-    (define typedefs (make-free-id-table))
-    (define (find-typedefs-help stx)
+  (define (syntax-object->typedefs stx [cur-typedefs (make-immutable-free-id-table)])
+    (define (find-typedefs-help stx table)
       (syntax-parse stx
-        (t:type-declaration
-         (dict-set! typedefs #'t.id (parse-type #'t.type)))
-        ((x ...)
-         (for-each find-typedefs-help (syntax-e #'(x ...))))
-        (_
-         (void))))
-    (find-typedefs-help stx)
-    typedefs)
+        [t:type-declaration (dict-set table #'t.id (parse-type #'t.type))]
+        [(x ...)
+         (for/fold ([acc table])
+                   ([new-stx (syntax-e #'(x ...))])
+           (find-typedefs-help new-stx acc))]
+        [_ table]))
+    (find-typedefs-help stx cur-typedefs))
 
-  ;; TODO: works for values return, case lambda, and pairs/lists
-  (define (typed-vector-introducer? type)
-    #t                                  ; TODO start extracting types again
-    #;(match type
-      [(Function: arrs)
-       (match (car arrs)
-         [(arr: _ (Values: (list (Result: cod _ _))) _ _ _)
-          (subtype cod (parse-type #'VectorTop))]
-         [_ (error "not an arity")])]
-      [_ (subtype type (parse-type #'VectorTop))]))
+  (define (get-type type-env id)
+    (cond [(dict-ref type-env id #f)]
+          [(syntax-property id 'origin) (get-type type-env (syntax-property id 'origin))]
+          [else #f]))
 
+  
+  
   (module+ test
-       (require rackunit rackunit/text-ui)
-       (define-test-suite test-types
-         
-         ;; This makes me doubt that this procedure should return
-         (test-false "parse Natural" (typed-vector-introducer? (parse-type #'Natural)))
-         (test-true "parse Vectorof Natural" (typed-vector-introducer? (parse-type #'(Vectorof Natural))))
-         (test-true "typed vector introducer 1"
-                    (typed-vector-introducer? (parse-type #'(-> (Vectorof Natural)
-                                                                (Vectorof Natural)))))
-         (test-false "typed vector introducer 2"
-                     (typed-vector-introducer? (parse-type #'(-> (Vectorof Natural) Integer))))
-         )
-       (void (run-tests test-types))
-       ))
+    (require rackunit rackunit/text-ui)
+    
+    ))
