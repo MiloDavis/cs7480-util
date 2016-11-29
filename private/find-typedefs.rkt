@@ -59,17 +59,16 @@
       (find-file-typedefs (path->string (file-name-from-path path)))))
 
   (define (find-file-typedefs path-str)
-    (parameterize ([current-namespace (make-base-namespace)])
-      (do-standard-inits)
-      (for/fold ([acc (make-immutable-free-id-table)])
-                ([path (in-list (module->typed-files path-str))])
-        (syntax-object->typedefs (read-and-expand (path->string path)) acc))))
+    (do-standard-inits)
+    (for/fold ([acc (make-immutable-free-id-table)])
+              ([path (in-list (module->typed-files path-str))])
+      (syntax-object->typedefs (read-and-expand (path->string path)) acc)))
 
   ;; Needs more information about required/provided functions to actually work
   (define (syntax-object->typedefs stx [cur-typedefs (make-immutable-free-id-table)])
     (define (find-typedefs-help stx table)
       (syntax-parse stx
-        [t:type-declaration (dict-set table #'t.id (parse-type #'t.type))]
+        [t:type-declaration (dict-set table #'t.id #'t.type)]
         [(x ...)
          (for/fold ([acc table])
                    ([new-stx (syntax-e #'(x ...))])
@@ -82,8 +81,6 @@
           [(syntax-property id 'origin) (get-type type-env (syntax-property id 'origin))]
           [else #f]))
 
-  
-  
   (module+ test
     (require rackunit rackunit/text-ui)
     

@@ -100,5 +100,3 @@
     (define/override (syncheck:add-jump-to-definition source-obj start end id filename submods)
       (when ((current-path-filter) filename)
         (set-add! ids source-obj)))))
-
-#;(println (module->typed-files "/Users/milodavis/Documents/gradual-typing/benchmarks/isgtd-small/id-2-files/main.rkt"))
