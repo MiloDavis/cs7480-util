@@ -59,7 +59,7 @@
                  typed-racket/rep/type-rep
                  racket/require
                  syntax/location
-                 typed-racket/base-env/base-types-extra))
+                 (except-in typed-racket/base-env/base-types-extra Un)))
 
   ;; ===========================================================================
 
