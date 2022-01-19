@@ -56,10 +56,9 @@
    (for-template (only-in typed-racket/typed-racket do-standard-inits)
                  typed-racket/base-env/base-types
                  typed-racket/base-env/colon
-                 typed-racket/rep/type-rep
+                 (except-in typed-racket/rep/type-rep Un)
                  racket/require
-                 syntax/location
-                 (except-in typed-racket/base-env/base-types-extra Un)))
+                 syntax/location))
 
   ;; ===========================================================================
 
@@ -103,7 +102,7 @@
   #;(module+ test
        (require rackunit rackunit/text-ui)
        (define-test-suite test-types
-         
+
          ;; This makes me doubt that this procedure should return
          (test-false "parse Natural" (typed-vector-introducer? (parse-type #'Natural)))
          (test-true "parse Vectorof Natural" (typed-vector-introducer? (parse-type #'(Vectorof Natural))))
